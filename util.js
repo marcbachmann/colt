@@ -44,10 +44,11 @@ module.exports = util = {
   callbackifyStream: function (stream, callback) {
     var chunks = []
     var exited = 0
-    function exit (err) { if (!exited++) callback(err, err ? null : chunks) }
+    function exit (err) { if (!exited++) callback(err, err ? null : Buffer.concat(chunks)) }
     stream
     .on('error', exit)
     .on('finish', exit)
+    .on('end', exit)
     .on('data', function (chunk) { chunks.push(chunk) })
   }
 }
