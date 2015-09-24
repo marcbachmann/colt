@@ -51,13 +51,17 @@ function collectize (methods, obj) {
       value: function end (callback) {
         var queries = obj.__queries
         delete obj.__queries
-        process.nextTick(function () {
+        var queries = obj.__invocations
+        // Force the callback to be async
+        // I don't care about performance in node
+        // I want to support the browser and I'm too lazy to wrap that method
+        setTimeout(function () {
           setValues({
             obj: obj,
             methods: methods,
             queries: queries
           }, callback)
-        })
+        }, 0)
         return obj
       }
     })
