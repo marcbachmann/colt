@@ -4,9 +4,8 @@ module.exports = coltApi()
 module.exports.new =
 module.exports.create = function (options) { return coltApi(options) }
 
-function coltApi (options) {
-  if (!options) options = {}
-  var methods = {}
+function coltApi (opts) {
+  var methods = (opts && opts.methods) || {}
 
   function colt () {
     var obj = {}
@@ -41,22 +40,23 @@ function collectize (methods, obj) {
     return function () {
       var mapName = arguments[0]
       if (methods[mapName]) throw new Error("You can't name the map name the same as your methods.")
-      obj.__invocations.push({method: method, args: Array.apply(null, arguments)})
+      obj.__invocations.push({method: method, args: arguments})
       return obj
     }
   }
 
   Object.defineProperty(obj, 'clone', {value: function () {
-    var api = coltApi()
-    api.__invocations.concat(obj.__invocations)
-    return api
+    var api = coltApi({methods: methods})
+    var instance = api()
+    Object.defineProperty(instance, '__invocations', {configurable: true, value: Array.apply(null, obj.__invocations)})
+    return instance
   }})
 
   each(methods, function (method, name) { Object.defineProperty(obj, name, {value: collect(method.options.name)}) })
   each(['end', 'exec', 'fire'], function (name) {
     Object.defineProperty(obj, name, {
       value: function end (callback) {
-        var queries = obj.__invocations
+        var invocations = obj.__invocations
         // Force the callback to be async
         // I don't care about performance in node
         // I want to support the browser and I'm too lazy to wrap that method
@@ -64,7 +64,7 @@ function collectize (methods, obj) {
           setValues({
             obj: obj,
             methods: methods,
-            queries: queries
+            queries: invocations
           }, callback)
         }, 0)
         delete obj.__invocations
@@ -82,10 +82,11 @@ function setValues (params, callback) {
   if (query === undefined) return callback(null, obj)
 
   var method = params.methods[query.method]
-  var name = query.args.shift()
+  var args = Array.apply(null, query.args)
+  var name = args.shift()
   if (method.options.evaluate !== false) {
-    var arg1 = query.args.shift()
-    util.callbackify({method: arg1, args: query.args}, function (err, value) {
+    var arg1 = args.shift()
+    util.callbackify({method: arg1, args: args}, function (err, value) {
       if (err) return callback(errorify(err))
       util.callbackify({method: method.method, args: [{name: name, value: value}], binding: obj}, function (err, data) {
         if (err) return callback(errorify(err))
@@ -96,7 +97,7 @@ function setValues (params, callback) {
   } else {
     util.callbackify({
       method: method.method,
-      args: [{name: name, args: query.args}],
+      args: [{name: name, args: args}],
       binding: obj
     }, function (err, data) {
       if (err) return callback(errorify(err))

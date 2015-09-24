@@ -36,3 +36,25 @@ colt()
   assert.ifError(err)
   assert.equal(res.package.name, 'colt', 'Reads a stream and maps over the result')
 })
+
+// Test .clone()
+var a = colt()
+.set('foo', 'bar')
+.set('hello', 'test')
+
+var b = a.clone()
+assert.notEqual(a, b)
+b.map('foo', function (val) { assert.equal(val, 'bar'); return 'bar' })
+b.map('hello', function (val) { assert.equal(val, 'test'); return 'qux' })
+.end(function (err, res) {
+  assert.ifError(err)
+  assert.equal(res.foo, 'bar')
+  assert.equal(res.hello, 'qux')
+})
+
+a.exec(function (err, res) {
+  assert.ifError(err)
+  assert.equal(res.foo, 'bar')
+  assert.equal(res.hello, 'test')
+})
+
