@@ -65,3 +65,52 @@ colt.register('createDocumentForUser', nope, function (content, callback) {
   })
 })
 ```
+
+
+#### How we use it (sorry for the coffee-script)
+```coffee
+describe 'User api:', ->
+
+  // Colt version
+  before (done) ->
+    @res = colt()
+    .createUser('normalUser')
+    .createUser('adminUser', {admin: true})
+    .createDocumentForUser('document', 'normalUser', {title: 'Foobar'})
+    .end(done)
+
+
+  // What this would look like with async.js
+  // This structures get really complex if you want
+  // to create relations and depend on previous results
+  before (done) ->
+    async.series
+      normalUser: (done) =>
+        userSupport.createUser (err, user) =>
+          @_userId = user.id
+          done(err, user)
+
+      document: (done) ->
+        userSupport.createDocument({
+          title: 'Foobar',
+          user_id: @_userId
+        }, done)
+
+      adminUser: (done) -> userSupport.createUser({admin: true}, done)
+    , (err, res) =>
+      @res = res
+      done(err)
+
+
+  it 'requires admin access to access users endpoint', (done) ->
+    request.get('/users')
+    .withUser(@res.normalUser)
+    .expect(401)
+    .end(done)
+
+  it 'allows admins to access the page', (done) ->
+    request.get('/users')
+    .withUser(@res.adminUser)
+    .expect(200)
+    .end(done)
+```
