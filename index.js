@@ -46,7 +46,13 @@ function collectize (methods, obj) {
     }
   }
 
-  _.each(methods, function (method) { Object.defineProperty(obj, method.name, {value: collect(method.name)}) })
+  Object.defineProperty(obj, 'clone', {value: function () {
+    var api = coltApi()
+    api.__invocations.concat(obj.__invocations)
+    return api
+  }})
+
+  _.each(methods, function (method, name) { Object.defineProperty(obj, name, {value: collect(method.options.name)}) })
   _.each(['end', 'exec', 'fire'], function (name) {
     Object.defineProperty(obj, name, {
       value: function end (callback) {
