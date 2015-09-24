@@ -2,36 +2,6 @@
 
 ### A sequencing library with a chainable api
 
-### API
-```javascript
-// The main module returns a colt api instance
-// If you register methods on this instance, they will be global
-// and will be returned if you require colt.
-var colt = require('colt')
-colt.load('methodName', function (content[, callback]){
-    // content = {name: 'valueKey', value: value}
-})
-
-// create a new instance
-var chain = colt.new()
-chain.load('set', function () {})
-
-// Execute a registered method
-res = colt().methodName('user').exec(callback)
-res2 = chain().set('user', value).exec(callback)
-function callback (err) {
-    if (err) throw err
-    // res.user is the result of methodName(args...)
-    // res2.user equals to value
-}
-
-// exit
-chain.exec(callback)
-chain.fire(callback)
-chain.end(callback)
-```
-
-
 #### Example usage
 ```javascript
 colt()
@@ -64,6 +34,36 @@ colt.register('createDocumentForUser', nope, function (content, callback) {
     callback(err, document)
   })
 })
+```
+
+
+### API
+```javascript
+// The main module returns a colt api instance
+// If you register methods on this instance, they will be global
+// and will be returned if you require colt.
+var colt = require('colt')
+colt.load('methodName', function (content[, callback]){
+    // content = {name: 'valueKey', value: value}
+})
+
+// create a new instance
+var chain = colt.new()
+chain.load('set', function () {})
+
+// Execute a registered method
+res = colt().methodName('user').exec(callback)
+res2 = chain().set('user', value).exec(callback)
+function callback (err) {
+    if (err) throw err
+    // res.user is the result of methodName(args...)
+    // res2.user equals to value
+}
+
+// exit
+chain.exec(callback)
+chain.fire(callback)
+chain.end(callback)
 ```
 
 
