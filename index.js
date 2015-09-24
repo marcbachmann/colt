@@ -36,12 +36,12 @@ function loadMethod (name, method, options, methods) {
 }
 
 function collectize (methods, obj) {
-  Object.defineProperty(obj, '__queries', {configurable: true, value: []})
+  Object.defineProperty(obj, '__invocations', {configurable: true, value: []})
   function collect (method) {
     return function () {
       var mapName = arguments[0]
       if (methods[mapName]) throw new Error("You can't name the map name the same as your methods.")
-      obj.__queries.push({method: method, args: _.toArray(arguments)})
+      obj.__invocations.push({method: method, args: _.toArray(arguments)})
       return obj
     }
   }
@@ -56,8 +56,6 @@ function collectize (methods, obj) {
   _.each(['end', 'exec', 'fire'], function (name) {
     Object.defineProperty(obj, name, {
       value: function end (callback) {
-        var queries = obj.__queries
-        delete obj.__queries
         var queries = obj.__invocations
         // Force the callback to be async
         // I don't care about performance in node
@@ -69,6 +67,7 @@ function collectize (methods, obj) {
             queries: queries
           }, callback)
         }, 0)
+        delete obj.__invocations
         return obj
       }
     })
