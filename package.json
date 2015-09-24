@@ -1,0 +1,28 @@
+{
+  "name": "colt",
+  "version": "1.0.0",
+  "description": "A sequencing library with a chainable api",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "standard && node test/index.js"
+  },
+  "author": "Marc Bachmann <marc.brookman@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "^3.10.1"
+  },
+  "devDependencies": {
+    "standard": "^5.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcbachmann/colt.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marcbachmann/colt/issues"
+  },
+  "homepage": "https://github.com/marcbachmann/colt"
+}
