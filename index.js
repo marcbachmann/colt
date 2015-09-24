@@ -13,25 +13,26 @@ function coltApi (options) {
     return collectize(methods, obj)
   }
 
-  colt.register = function (names, options, method) {
-    if (!_.isFunction(method)) {
-      method = options
-      options = {}
-    }
+  colt.load =
+  colt.register = function (options, method) {
+    if (_.isString(options)) options = {name: options}
+    else if (_.isArray(options)) options = {name: options.shift(), aliases: options}
 
-    if (_.isString(names)) names = [names]
-    _.each(names, function (name) {
-      if (_.contains(['end', 'exec', 'fire'], name)) {
-        throw new Error("Couldn't register the method '" + name + "'. 'end', 'exec' and 'done' are protected keywords.")
-      } else if (methods[name]) {
-        throw new Error("There's already a method registered with the name '" + name + "'.")
-      }
-
-      methods[name] = {name: name, method: method, options: options}
-    })
+    loadMethod(options.name, method, options, methods)
+    _.each(options.aliases, function (name) { loadMethod(name, method, options, methods) })
   }
 
   return colt
+}
+
+function loadMethod (name, method, options, methods) {
+  if (_.contains(['end', 'exec', 'fire', 'clone'], name)) {
+    throw new Error("Couldn't register the method '" + name + "'. 'end', 'exec', 'fire' and 'clone' are protected keywords.")
+  } else if (methods[name]) {
+    throw new Error("There's already a method registered with the name '" + name + "'.")
+  }
+
+  methods[name] = {name: options.name, options: options, method: method}
 }
 
 function collectize (methods, obj) {
