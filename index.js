@@ -21,7 +21,7 @@ function coltApi (options) {
 
     if (_.isString(names)) names = [names]
     _.each(names, function (name) {
-      if (_.contains(['end', 'exec', 'done', 'fire'], name)) {
+      if (_.contains(['end', 'exec', 'fire'], name)) {
         throw new Error("Couldn't register the method '" + name + "'. 'end', 'exec' and 'done' are protected keywords.")
       } else if (methods[name]) {
         throw new Error("There's already a method registered with the name '" + name + "'.")
@@ -46,7 +46,7 @@ function collectize (methods, obj) {
   }
 
   _.each(methods, function (method) { Object.defineProperty(obj, method.name, {value: collect(method.name)}) })
-  _.each(['end', 'exec', 'done', 'fire'], function (name) {
+  _.each(['end', 'exec', 'fire'], function (name) {
     Object.defineProperty(obj, name, {
       value: function end (callback) {
         var queries = obj.__queries
