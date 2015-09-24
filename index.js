@@ -1,4 +1,3 @@
-var _ = require('lodash')
 var util = require('./util')
 
 module.exports = coltApi()
@@ -16,18 +15,18 @@ function coltApi (options) {
 
   colt.load =
   colt.register = function (options, method) {
-    if (_.isString(options)) options = {name: options}
-    else if (_.isArray(options)) options = {name: options.shift(), aliases: options}
+    if (typeof options === 'string') options = {name: options}
+    else if (Array.isArray(options)) options = {name: options.shift(), aliases: options}
 
     loadMethod(options.name, method, options, methods)
-    _.each(options.aliases, function (name) { loadMethod(name, method, options, methods) })
+    each(options.aliases, function (name) { loadMethod(name, method, options, methods) })
   }
 
   return colt
 }
 
 function loadMethod (name, method, options, methods) {
-  if (_.contains(['end', 'exec', 'fire', 'clone'], name)) {
+  if (['end', 'exec', 'fire', 'clone'].indexOf(name) !== -1) {
     throw new Error("Couldn't register the method '" + name + "'. 'end', 'exec', 'fire' and 'clone' are protected keywords.")
   } else if (methods[name]) {
     throw new Error("There's already a method registered with the name '" + name + "'.")
@@ -42,7 +41,7 @@ function collectize (methods, obj) {
     return function () {
       var mapName = arguments[0]
       if (methods[mapName]) throw new Error("You can't name the map name the same as your methods.")
-      obj.__invocations.push({method: method, args: _.toArray(arguments)})
+      obj.__invocations.push({method: method, args: Array.apply(null, arguments)})
       return obj
     }
   }
@@ -53,8 +52,8 @@ function collectize (methods, obj) {
     return api
   }})
 
-  _.each(methods, function (method, name) { Object.defineProperty(obj, name, {value: collect(method.options.name)}) })
-  _.each(['end', 'exec', 'fire'], function (name) {
+  each(methods, function (method, name) { Object.defineProperty(obj, name, {value: collect(method.options.name)}) })
+  each(['end', 'exec', 'fire'], function (name) {
     Object.defineProperty(obj, name, {
       value: function end (callback) {
         var queries = obj.__invocations
@@ -108,6 +107,19 @@ function setValues (params, callback) {
 }
 
 function errorify (err) {
-  if (_.isError(err)) return err
+  if (err instanceof Error) return err
   return new Error("You threw something that's not an error instance: " + err)
+}
+
+function each (arr, callback) {
+  if (!arr || arr.length === 0) return
+  if (Array.isArray(arr)) {
+    for (var i = arr.length - 1; i >= 0; i--) {
+      callback(arr[i])
+    }
+  } else if (typeof arr === 'object') {
+    for (var key in arr) {
+      callback(arr[key], key)
+    }
+  }
 }

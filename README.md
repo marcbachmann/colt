@@ -8,13 +8,13 @@
 // If you register methods on this instance, they will be global
 // and will be returned if you require colt.
 var colt = require('colt')
-colt.register('methodName', function (content[, callback]){
+colt.load('methodName', function (content[, callback]){
     // content = {name: 'valueKey', value: value}
 })
 
 // create a new instance
 var chain = colt.new()
-chain.register('set', function () {})
+chain.load('set', function () {})
 
 // Execute a registered method
 res = colt().methodName('user').exec(callback)

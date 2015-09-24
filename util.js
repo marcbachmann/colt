@@ -1,4 +1,3 @@
-var _ = require('lodash')
 var util
 
 module.exports = util = {
@@ -11,7 +10,7 @@ module.exports = util = {
     var args = opts.args || []
     var binding = opts.binding || {}
 
-    if (_.isFunction(method)) {
+    if (typeof method === 'function') {
       if ((method.length - 1) === args.length) return method.apply(binding, args.concat(callback))
       else if (method.length !== args.length) return callback(new Error("You don't have as many arguments as you have params."))
 
