@@ -1,7 +1,7 @@
 var util
 
 module.exports = util = {
-  isPromise: function (prom) { return prom && prom.then !== undefined },
+  isPromise: function (promise) { return promise && typeof promise.then === 'function' && typeof promise.catch === 'function' },
 
   isStream: function (stream) { return stream && typeof stream._read === 'function' && typeof stream._readableState === 'object' },
 
@@ -34,8 +34,8 @@ module.exports = util = {
     }
   },
 
-  callbackifyPromise: function (prom, callback) {
-    prom
+  callbackifyPromise: function (promise, callback) {
+    promise
     .catch(callback)
     .then(function (data) { callback(null, data) })
   },
@@ -48,6 +48,8 @@ module.exports = util = {
     .on('error', exit)
     .on('finish', exit)
     .on('end', exit)
+    .on('close', exit)
+    .on('abort', exit)
     .on('data', function (chunk) { chunks.push(chunk) })
   }
 }
