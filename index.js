@@ -2,7 +2,8 @@ var _ = require('lodash')
 var util = require('./util')
 
 module.exports = coltApi()
-module.exports.new = function (options) { return coltApi(options) }
+module.exports.new =
+module.exports.create = function (options) { return coltApi(options) }
 
 function coltApi (options) {
   if (!options) options = {}
