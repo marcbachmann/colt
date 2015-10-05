@@ -86,6 +86,7 @@ function setValues (params, callback) {
   var name = args.shift()
   if (method.options.evaluate !== false) {
     var arg1 = args.shift()
+    if (typeof name !== 'string') throw new Error('colt().' + method.method + '(mapName, args...): The mapName must be  a string.')
     util.callbackify({method: arg1, args: args}, function (err, value) {
       if (err) return callback(errorify(err))
       util.callbackify({method: method.method, args: [{name: name, value: value}], binding: obj}, function (err, data) {
