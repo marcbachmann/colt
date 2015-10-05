@@ -14,7 +14,37 @@ colt()
 ```
 
 
-#### Registering methods
+### API
+
+var colt = require('colt')
+
+#### colt
+Is a colt api instance
+
+#### colt.create(), colt.new()
+Creates a new colt api instance
+
+#### colt1.mixin(colt2)
+Extends colt1 with all the methods from colt2
+
+#### colt.clone()
+Returns a new colt api instance with all the methods from colt
+
+#### colt.register(yourMethodName, function (content[, callback]))
+Is used to register a method, content contains a name and a value object.
+
+#### colt()
+Returns an object which contains all colt methods you registered
+
+#### colt()[yourMethodName](mapName, value)
+`yourMethodName` is the name of a method you registered using `colt.register`
+
+#### colt().end, colt().fire, colt().exec
+Are methods which accept a node type callback `callback(err, res)`
+`res` contains all values which get populated during the execution
+
+
+### How to register methods
 ```javascript
 // Register methods
 var colt = require('colt')
@@ -37,7 +67,7 @@ colt.register('createDocumentForUser', nope, function (content, callback) {
 ```
 
 
-### API
+### More examples
 ```javascript
 // The main module returns a colt api instance
 // If you register methods on this instance, they will be global
@@ -49,15 +79,21 @@ colt.load('methodName', function (content[, callback]){
 
 // create a new instance
 var chain = colt.new()
-chain.load('set', function () {})
+
+// Or clone an instance
+chain = colt.clone()
+
+// You can use .mixin to inherit from specific colt instances
+chain.mixin(colt)
+
+
+chain.load('set', function (content) { callback(null, content.value) })
 
 // Execute a registered method
-res = colt().methodName('user').exec(callback)
-res2 = chain().set('user', value).exec(callback)
+var res = chain().set('user', {id: 1}).exec(callback)
 function callback (err) {
     if (err) throw err
-    // res.user is the result of methodName(args...)
-    // res2.user equals to value
+    // res.user is the result of the method defined in chain.load('set', ...
 }
 
 // exit
@@ -67,7 +103,7 @@ chain.end(callback)
 ```
 
 
-#### How we use it (sorry for the coffee-script)
+### How we use it (sorry for the coffee-script)
 ```coffee
 describe 'User api:', ->
 
