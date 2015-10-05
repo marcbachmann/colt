@@ -58,3 +58,7 @@ a.exec(function (err, res) {
   assert.equal(res.hello, 'test')
 })
 
+// Test colt.mixin
+var colt2 = colt.create().mixin(colt)
+assert.equal(colt2._methods.set, colt2._methods.set)
+assert(colt2().set, 'Set method gets defined on new instance')

@@ -21,6 +21,14 @@ function coltApi (opts) {
     each(options.aliases, function (name) { loadMethod(name, method, options, methods) })
   }
 
+  // Mixin support
+  // E.g. colt.mixin(colt)
+  colt._methods = methods
+  colt.mixin = function (otherColtApi) {
+    each(otherColtApi._methods, function (method, name) { methods[name] = method })
+    return colt
+  }
+
   return colt
 }
 
