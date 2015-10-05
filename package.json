@@ -1,6 +1,6 @@
 {
   "name": "colt",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A sequencing library with a chainable api",
   "main": "index.js",
   "directories": {
