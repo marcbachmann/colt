@@ -21,7 +21,7 @@ var colt = require('colt')
 #### colt
 Is a colt api instance
 
-#### colt.create(), colt.new()
+#### colt.forge(), colt.create(), colt.new()
 Creates a new colt api instance
 
 #### colt1.mixin(colt2)
@@ -47,7 +47,7 @@ Are methods which accept a node type callback `callback(err, res)`
 ### How to register methods
 ```javascript
 // Register methods
-var colt = require('colt')
+var colt = require('colt').forge()
 
 colt.register('set', function (content) {
   return content.value
@@ -57,8 +57,7 @@ colt.register('createUser', function (content, callback) {
   request.post('/users', function (err, user) { callback(err, user) })
 })
 
-var nope = {evaluate: false}
-colt.register('createDocumentForUser', nope, function (content, callback) {
+colt.register({name: 'createDocumentForUser', evaluate: false}, function (content, callback) {
   var data = _.extend(content.args[1], {user_id: this[content.args[0]].id })
   request.post('/documents', data, function (err, document) {
     callback(err, document)
@@ -78,7 +77,7 @@ colt.load('methodName', function (content[, callback]){
 })
 
 // create a new instance
-var chain = colt.new()
+var chain = colt.forge()
 
 // Or clone an instance
 chain = colt.clone()

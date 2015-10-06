@@ -1,8 +1,6 @@
 var util = require('./util')
 
 module.exports = coltApi()
-module.exports.new =
-module.exports.create = function (options) { return coltApi(options) }
 
 function coltApi (opts) {
   var methods = (opts && opts.methods) || {}
@@ -11,6 +9,10 @@ function coltApi (opts) {
     var obj = {}
     return collectize(methods, obj)
   }
+
+  colt.new =
+  colt.forge =
+  colt.create = function (options) { return coltApi(options) }
 
   colt.load =
   colt.register = function (options, method) {
