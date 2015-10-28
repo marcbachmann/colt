@@ -3,11 +3,13 @@ var util = require('./util')
 module.exports = coltApi()
 
 function coltApi (opts) {
-  var methods = (opts && opts.methods) || {}
+  var methods = (opts && opts.__methods) || {}
 
-  function colt () {
-    var obj = {}
-    return collectize(methods, obj)
+  function colt (opts) {
+    opts = opts || {}
+    var invocations = opts.__invocations && Array.apply(null, opts.__invocations)
+    var chainable = {}
+    return collectize(methods, invocations, chainable)
   }
 
   colt.new =
@@ -25,9 +27,9 @@ function coltApi (opts) {
 
   // Mixin support
   // E.g. colt.mixin(colt)
-  colt._methods = methods
+  colt.__methods = methods
   colt.mixin = function (otherColtApi) {
-    each(otherColtApi._methods, function (method, name) { methods[name] = method })
+    each(otherColtApi.__methods, function (method, name) { methods[name] = method })
     return colt
   }
 
@@ -44,52 +46,55 @@ function loadMethod (name, method, options, methods) {
   methods[name] = {name: options.name, options: options, method: method}
 }
 
-function collectize (methods, obj) {
-  Object.defineProperty(obj, '__invocations', {configurable: true, value: []})
-  function collect (method) {
-    return function () {
-      var mapName = arguments[0]
-      if (methods[mapName]) throw new Error("You can't name the map name the same as your methods.")
-      obj.__invocations.push({method: method, args: arguments})
-      return obj
-    }
-  }
+function collectize (methods, invocations, chainable) {
+  invocations = invocations || []
 
-  Object.defineProperty(obj, 'clone', {value: function () {
-    var api = coltApi({methods: methods})
-    var instance = api()
-    Object.defineProperty(instance, '__invocations', {configurable: true, value: Array.apply(null, obj.__invocations)})
+  Object.defineProperty(chainable, 'clone', {value: function () {
+    var api = coltApi({__methods: methods})
+    var instance = api({__invocations: invocations})
     return instance
   }})
 
-  each(methods, function (method, name) { Object.defineProperty(obj, name, {value: collect(method.options.name)}) })
+  each(methods, function (method, name) {
+    Object.defineProperty(chainable, name, {
+      value: collect(chainable, methods, invocations, method.options.name)
+    })
+  })
+
   each(['end', 'exec', 'fire'], function (name) {
-    Object.defineProperty(obj, name, {
+    Object.defineProperty(chainable, name, {
       value: function end (callback) {
-        var invocations = obj.__invocations
         // Force the callback to be async
         // I don't care about performance in node
         // I want to support the browser and I'm too lazy to wrap that method
         setTimeout(function () {
           setValues({
-            obj: obj,
+            chainable: chainable,
             methods: methods,
             queries: invocations
           }, callback)
         }, 0)
-        delete obj.__invocations
-        return obj
+        return chainable
       }
     })
   })
-  return obj
+  return chainable
 }
 
-// params = {obj, methods, queries}
+function collect (chainable, methods, invocations, method) {
+  return function () {
+    var mapName = arguments[0]
+    if (methods[mapName]) throw new Error("You can't name the map name the same as your methods.")
+    invocations.push({method: method, args: arguments})
+    return chainable
+  }
+}
+
+// params = {chainable, methods, queries}
 function setValues (params, callback) {
-  var obj = params.obj
+  var chainable = params.chainable
   var query = params.queries.shift()
-  if (query === undefined) return callback(null, obj)
+  if (query === undefined) return callback(null, chainable)
 
   var method = params.methods[query.method]
   var args = Array.apply(null, query.args)
@@ -99,9 +104,9 @@ function setValues (params, callback) {
     if (typeof name !== 'string') throw new Error('colt().' + method.method + '(mapName, args...): The mapName must be  a string.')
     util.callbackify({method: arg1, args: args}, function (err, value) {
       if (err) return callback(errorify(err))
-      util.callbackify({method: method.method, args: [{name: name, value: value}], binding: obj}, function (err, data) {
+      util.callbackify({method: method.method, args: [{name: name, value: value}], binding: chainable}, function (err, data) {
         if (err) return callback(errorify(err))
-        params.obj[name] = data
+        params.chainable[name] = data
         setValues(params, callback)
       })
     })
@@ -109,10 +114,10 @@ function setValues (params, callback) {
     util.callbackify({
       method: method.method,
       args: [{name: name, args: args}],
-      binding: obj
+      binding: chainable
     }, function (err, data) {
       if (err) return callback(errorify(err))
-      params.obj[name] = data
+      params.chainable[name] = data
       setValues(params, callback)
     })
   }
