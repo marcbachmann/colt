@@ -43,7 +43,15 @@ module.exports = util = {
   callbackifyStream: function (stream, callback) {
     var chunks = []
     var exited = 0
-    function exit (err) { if (!exited++) callback(err, err ? null : Buffer.concat(chunks)) }
+    function exit (err) {
+      if (!exited++) {
+        if (err) callback(err)
+        else if (!chunks.length) callback()
+        else if (Buffer.isBuffer(chunks[0])) callback(null, Buffer.concat(chunks))
+        else callback(err, chunks.join())
+      }
+    }
+
     stream
     .on('error', exit)
     .on('finish', exit)
