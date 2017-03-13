@@ -1,5 +1,7 @@
 # Colt
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/marcbachmann/colt.svg)](https://greenkeeper.io/)
+
 ### A sequencing library with a chainable api
 
 #### Example usage
