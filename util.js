@@ -12,7 +12,14 @@ module.exports = util = {
 
     if (typeof method === 'function') {
       if ((method.length - 1) === args.length) return method.apply(binding, args.concat(callback))
-      else if (method.length !== args.length) return callback(new Error("You don't have as many arguments as you have params."))
+      else if (method.length !== args.length) {
+        var received = Array.from(args)
+          .map(function (arg) { return JSON.stringify(arg) })
+          .join(', ')
+        return callback(new Error(
+          `Expected ${method.length} arguments, received ${args.length} args: ${method.name}(${received})`
+        ))
+      }
 
       try {
         method = method.apply(binding, args)
@@ -61,4 +68,3 @@ module.exports = util = {
     .on('data', function (chunk) { chunks.push(chunk) })
   }
 }
-
