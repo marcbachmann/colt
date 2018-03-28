@@ -7,7 +7,7 @@ function coltApi (opts) {
 
   function colt (opts) {
     opts = opts || {}
-    var invocations = opts.__invocations && Array.apply(null, opts.__invocations)
+    var invocations = Array.from(opts.__invocations || [])
     var chainable = {}
     return collectize(methods, invocations, chainable)
   }
@@ -36,9 +36,10 @@ function coltApi (opts) {
   return colt
 }
 
+var protectedMethods = ['end', 'exec', 'fire', 'clone', 'then', 'catch', 'finally']
 function loadMethod (name, method, options, methods) {
-  if (['end', 'exec', 'fire', 'clone'].indexOf(name) !== -1) {
-    throw new Error("Couldn't register the method '" + name + "'. 'end', 'exec', 'fire' and 'clone' are protected keywords.")
+  if (protectedMethods.includes(name)) {
+    throw new Error(`Couldn't register the method '${name}'. ${protectedMethods.join(', ')} are protected keywords.`)
   } else if (methods[name]) {
     throw new Error("There's already a method registered with the name '" + name + "'.")
   }
@@ -97,7 +98,7 @@ function setValues (params, callback) {
   if (query === undefined) return callback(null, chainable)
 
   var method = params.methods[query.method]
-  var args = Array.apply(null, query.args)
+  var args = Array.from(query.args || [])
   var name = args.shift()
   if (method.options.evaluate !== false) {
     var arg1 = args.shift()
