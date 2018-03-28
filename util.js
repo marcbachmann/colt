@@ -43,8 +43,8 @@ module.exports = util = {
 
   callbackifyPromise: function (promise, callback) {
     promise
-    .catch(callback)
-    .then(function (data) { callback(null, data) })
+      .catch(callback)
+      .then(function (data) { callback(null, data) })
   },
 
   callbackifyStream: function (stream, callback) {
@@ -60,11 +60,11 @@ module.exports = util = {
     }
 
     stream
-    .on('error', exit)
-    .on('finish', exit)
-    .on('end', exit)
-    .on('close', exit)
-    .on('abort', exit)
-    .on('data', function (chunk) { chunks.push(chunk) })
+      .on('error', exit)
+      .on('finish', exit)
+      .on('end', exit)
+      .on('close', exit)
+      .on('abort', exit)
+      .on('data', function (chunk) { chunks.push(chunk) })
   }
 }
