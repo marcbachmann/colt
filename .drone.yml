@@ -6,8 +6,9 @@ clone:
 
 pipeline:
   eslint:
-    image: marcbachmann/eslint:4.19.0
     group: test
+    image: marcbachmann/eslint:5.10.0
+    secrets: [gh_token]
 
   test-node-8:
     group: test
