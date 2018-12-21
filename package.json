@@ -7,12 +7,13 @@
     "test": "test"
   },
   "scripts": {
-    "test": "eslint .",
+    "test": "eslint . && node test.js",
     "test:ci": "node test.js"
   },
   "author": "Marc Bachmann <marc.brookman@gmail.com>",
   "license": "ISC",
   "devDependencies": {
+    "eslint": "^5.10.0",
     "eslint-config-standard": "^11.0.0",
     "eslint-plugin-import": "^2.9.0",
     "eslint-plugin-node": "^6.0.1",
