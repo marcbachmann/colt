@@ -1,5 +1,5 @@
 var assert = require('assert')
-var colt = require('../')
+var colt = require('./index')
 
 colt.register('set', function (content) {
   return content.value
@@ -27,7 +27,7 @@ var res = colt()
   })
 
 // ReadStream test
-var readStream = require('fs').createReadStream(require.resolve('../package.json'), {encoding: 'utf8'})
+var readStream = require('fs').createReadStream(require.resolve('./package.json'), {encoding: 'utf8'})
 
 colt()
   .set('package', readStream)
@@ -62,3 +62,58 @@ a.exec(function (err, res) {
 var colt2 = colt.create().mixin(colt)
 assert.equal(colt.__methods.set, colt2.__methods.set)
 assert(colt2().set, 'Set method gets defined on new instance')
+
+// Promise support with await
+var c = colt()
+  .set('foo', 'bar')
+  .set('hello', 'test')
+
+assert.equal(typeof c.then, 'function')
+assert.equal(typeof c.catch, 'function')
+
+const asyncFunc = async function () {
+  const val = await c
+  assert.equal(val.foo, 'bar')
+  assert.equal(val.hello, 'test')
+}
+
+asyncFunc()
+
+// Promise support with then
+var d = colt()
+  .set('foo', 'bar')
+  .set('hello', 'test')
+
+d.then(function (val) {
+  assert.equal(val.foo, 'bar')
+  assert.equal(val.hello, 'test')
+})
+
+// Promise support with catch
+colt()
+  .set('foo', function () { throw new Error('Foo') })
+  .set('hello', 'test')
+  .catch(function (err) {
+    assert.equal(err.message, 'Foo')
+  })
+
+// Promise support with then and catch
+colt()
+  .set('foo', function () { throw new Error('Foo') })
+  .set('hello', 'test')
+  .then(function () {
+    throw new Error('Never gets called')
+  })
+  .catch(function (err) {
+    assert.equal(err.message, 'Foo')
+  })
+
+// Promise support with then, catch
+colt()
+  .set('foo', function () { throw new Error('Foo') })
+  .set('hello', 'test')
+  .then(function () {
+    throw new Error('Never gets called')
+  }, function (err) {
+    assert.equal(err.message, 'Foo')
+  })

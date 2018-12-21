@@ -1,4 +1,5 @@
 var util = require('./util')
+var immediately = typeof setImmediate === 'function' ? setImmediate : (func) => setTimeout(func, 0)
 
 module.exports = coltApi()
 
@@ -65,20 +66,56 @@ function collectize (methods, invocations, chainable) {
   each(['end', 'exec', 'fire'], function (name) {
     Object.defineProperty(chainable, name, {
       value: function end (callback) {
+        unpromisify(chainable)
+
         // Force the callback to be async
         // I don't care about performance in node
         // I want to support the browser and I'm too lazy to wrap that method
-        setTimeout(function () {
+        immediately(function () {
           setValues({
             chainable: chainable,
             methods: methods,
             queries: invocations
           }, callback)
-        }, 0)
+        })
         return chainable
       }
     })
   })
+
+  function unpromisify () {
+    Object.defineProperty(chainable, 'catch', {value: undefined})
+    Object.defineProperty(chainable, 'then', {value: undefined})
+  }
+
+  function toPromise () {
+    unpromisify(chainable)
+    return new Promise(function (resolve, reject) {
+      setValues({
+        chainable: chainable,
+        methods: methods,
+        queries: invocations
+      }, function (err, res) {
+        if (err) return reject(err)
+        return resolve(res)
+      })
+    })
+  }
+
+  Object.defineProperty(chainable, 'then', {
+    configurable: true,
+    value: function promiseThen (onSuccess, onCatch) {
+      return toPromise().then(onSuccess, onCatch)
+    }
+  })
+
+  Object.defineProperty(chainable, 'catch', {
+    configurable: true,
+    value: function promiseCatch (onCatch) {
+      return toPromise().catch(onCatch)
+    }
+  })
+
   return chainable
 }
 
