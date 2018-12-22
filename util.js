@@ -1,23 +1,26 @@
-var util
+const util = {
+  isPromise (promise) {
+    return promise && typeof promise.then === 'function' && typeof promise.catch === 'function'
+  },
 
-module.exports = util = {
-  isPromise: function (promise) { return promise && typeof promise.then === 'function' && typeof promise.catch === 'function' },
+  isStream (stream) {
+    return stream && typeof stream._read === 'function' && typeof stream._readableState === 'object'
+  },
 
-  isStream: function (stream) { return stream && typeof stream._read === 'function' && typeof stream._readableState === 'object' },
-
-  callbackify: function (opts, callback) {
-    var method = opts.method
-    var args = opts.args || []
-    var binding = opts.binding || {}
+  callbackify (opts, callback) {
+    let method = opts.method
+    const args = opts.args || []
+    const binding = opts.binding || {}
 
     if (typeof method === 'function') {
       if ((method.length - 1) === args.length) return method.apply(binding, args.concat(callback))
       else if (method.length !== args.length) {
-        var received = Array.from(args)
+        const received = Array.from(args)
           .map(function (arg) { return JSON.stringify(arg) })
           .join(', ')
+
         return callback(new Error(
-          `Expected ${method.length} arguments, received ${args.length} args: ${method.name}(${received})`
+          `Expected ${method.length} arguments, received ${args.length} args: ${method.name}(${received})` // eslint-disable-line max-len
         ))
       }
 
@@ -33,29 +36,29 @@ module.exports = util = {
     }
 
     if (util.isStream(method)) {
-      util.callbackifyStream(method, callback)
+      return util.callbackifyStream(method, callback)
     } else if (util.isPromise(method)) {
-      util.callbackifyPromise(method, callback)
+      return util.callbackifyPromise(method, callback)
     } else {
-      callback(null, method)
+      return callback(null, method)
     }
   },
 
-  callbackifyPromise: function (promise, callback) {
+  callbackifyPromise (promise, callback) {
     promise
       .catch(callback)
       .then(function (data) { callback(null, data) })
   },
 
-  callbackifyStream: function (stream, callback) {
-    var chunks = []
-    var exited = 0
+  callbackifyStream (stream, callback) {
+    const chunks = []
+    let exited = 0
     function exit (err) {
       if (!exited++) {
-        if (err) callback(err)
-        else if (!chunks.length) callback()
-        else if (Buffer.isBuffer(chunks[0])) callback(null, Buffer.concat(chunks))
-        else callback(err, chunks.join())
+        if (err) return callback(err)
+        else if (!chunks.length) return callback()
+        else if (Buffer.isBuffer(chunks[0])) return callback(null, Buffer.concat(chunks))
+        else return callback(err, chunks.join())
       }
     }
 
@@ -68,3 +71,5 @@ module.exports = util = {
       .on('data', function (chunk) { chunks.push(chunk) })
   }
 }
+
+module.exports = util
