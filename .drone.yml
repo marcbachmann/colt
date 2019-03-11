@@ -1,31 +1,50 @@
+---
+kind: pipeline
+name: default
+
 clone:
-  git:
-    image: plugins/git
-    depth: 50
-    tags: true
+  depth: 50
 
-pipeline:
-  eslint:
-    group: test
-    image: marcbachmann/eslint:5.10.0
-    secrets: [gh_token]
+steps:
+- name: eslint
+  image: marcbachmann/eslint:5.10.0
+  environment:
+    GH_TOKEN:
+      from_secret: GH_TOKEN
 
-  test-node-8:
-    group: test
-    image: node:8-alpine
-    commands: ["npm run test:ci -s"]
+- name: test-node-8
+  image: node:8-alpine
+  commands: ["npm run test:ci -s"]
 
-  test-node-10:
-    group: test
-    image: node:10-alpine
-    commands: ["npm run test:ci -s"]
+- name: test-node-10
+  image: node:10-alpine
+  commands: ["npm run test:ci -s"]
 
-  test-node-11:
-    group: test
-    image: node:11-alpine
-    commands: ["npm run test:ci -s"]
 
-  publish:
-    group: build
-    image: marcbachmann/semantic-release:15.1.3
-    secrets: [gh_token, npm_token]
+- name: test-node-11
+  image: node:11-alpine
+  commands: ["npm run test:ci -s"]
+
+- name: set-build-info
+  image: node:10
+  commands: ["npx set-ci"]
+
+- name: pre-release
+  image: docker:git
+  commands: ["git fetch --tags"]
+
+- name: release
+  image: marcbachmann/semantic-release:15.1.3
+  environment:
+    GH_TOKEN:
+      from_secret: GH_TOKEN
+    NPM_TOKEN:
+      from_secret: NPM_TOKEN
+
+trigger:
+  event: [push]
+---
+kind: signature
+hmac: 62d935c717d20b3a038c5b2c0ac1a97d3a5bbcaa35d5c1bc1420e3c7f268c897
+
+...
