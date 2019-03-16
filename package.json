@@ -27,5 +27,8 @@
   "bugs": {
     "url": "https://github.com/marcbachmann/colt/issues"
   },
-  "homepage": "https://github.com/marcbachmann/colt"
+  "homepage": "https://github.com/marcbachmann/colt",
+  "release": {
+    "extends": "@livingdocs/semantic-release-presets/npm-github"
+  }
 }

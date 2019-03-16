@@ -25,16 +25,8 @@ steps:
   image: node:11-alpine
   commands: ["npm run test:ci -s"]
 
-- name: set-build-info
-  image: node:10
-  commands: ["npx set-ci"]
-
-- name: pre-release
-  image: docker:git
-  commands: ["git fetch --tags"]
-
 - name: release
-  image: marcbachmann/semantic-release:15.1.3
+  image: livingdocs/semantic-release:v1.0.0
   environment:
     GH_TOKEN:
       from_secret: GH_TOKEN
@@ -45,6 +37,6 @@ trigger:
   event: [push]
 ---
 kind: signature
-hmac: 62d935c717d20b3a038c5b2c0ac1a97d3a5bbcaa35d5c1bc1420e3c7f268c897
+hmac: 49ef81cfcad8aca055f542deef194448028d83c63de20baed669cfe56eac4eed
 
 ...
