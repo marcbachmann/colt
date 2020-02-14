@@ -14,11 +14,23 @@ const util = {
     return method
   },
 
-  async promisifyStream (stream) {
-    const chunks = []
-    for await (const chunk of stream) chunks.push(chunk)
-    if (Buffer.isBuffer(chunks[0])) return Buffer.concat(chunks)
-    return chunks
+  promisifyStream (stream) {
+    return new Promise((resolve, reject) => {
+      const chunks = []
+      function exit (err) {
+        if (err) return reject(err)
+        if (Buffer.isBuffer(chunks[0])) return resolve(Buffer.concat(chunks))
+        resolve(chunks)
+      }
+
+      stream
+        .on('error', exit)
+        .on('finish', exit)
+        .on('end', exit)
+        .on('close', exit)
+        .on('abort', exit)
+        .on('data', function (chunk) { chunks.push(chunk) })
+    })
   },
 
   promisify (action, args) {
