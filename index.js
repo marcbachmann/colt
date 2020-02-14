@@ -75,15 +75,11 @@ function collectize (methods, invocations, chainable) {
     Object.defineProperty(chainable, name, {
       value: function end (callback) {
         unpromisify(chainable)
-
-        // Force the callback to be async
-        // I don't care about performance in node
-        // I want to support the browser and I'm too lazy to wrap that method
-        setValuesCb({
+        util.invokeAsync(callback, setValues({
           chainable,
           methods,
           invocations
-        }, callback)
+        }))
         return chainable
       }
     })
@@ -124,11 +120,6 @@ function collect (chainable, methods, invocations, method) {
     invocations.push({method, args})
     return chainable
   }
-}
-
-// params = {chainable, methods, invocations}
-function setValuesCb (params, callback) {
-  util.invokeAsync(callback, setValues(params))
 }
 
 async function setValues ({chainable, invocations, methods}) {
