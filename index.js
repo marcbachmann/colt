@@ -1,6 +1,4 @@
-/* globals Promise, setImmediate, setTimeout */
 const util = require('./util')
-const immediately = typeof setImmediate === 'function' ? setImmediate : (func) => setTimeout(func, 0) // eslint-disable-line max-len
 
 module.exports = coltApi()
 
@@ -46,7 +44,14 @@ function loadMethod (name, method, options, methods) {
     throw new Error(`There's already a method registered with the name '${name}'.`)
   }
 
-  methods[name] = {name: options.name, options: options, method: method}
+  if (method.length > 1) {
+    const originalMethod = method
+    method = function promisified (...arg) {
+      return util.promisify.call(this, originalMethod, arg)
+    }
+  }
+
+  methods[name] = {name: options.name, options, method}
 }
 
 function collectize (methods, invocations, chainable) {
@@ -59,9 +64,11 @@ function collectize (methods, invocations, chainable) {
   }})
 
   each(methods, function (method, name) {
-    Object.defineProperty(chainable, name, {
-      value: collect(chainable, methods, invocations, method.options.name)
+    const value = collect(chainable, methods, invocations, method.options.name)
+    Object.defineProperty(value, 'name', {
+      value: `${method.method.name} [as colt.${method.options.name}]`
     })
+    Object.defineProperty(chainable, name, {value})
   })
 
   each(['end', 'exec', 'fire'], function (name) {
@@ -72,13 +79,11 @@ function collectize (methods, invocations, chainable) {
         // Force the callback to be async
         // I don't care about performance in node
         // I want to support the browser and I'm too lazy to wrap that method
-        immediately(function () {
-          setValues({
-            chainable: chainable,
-            methods: methods,
-            queries: invocations
-          }, callback)
-        })
+        setValuesCb({
+          chainable,
+          methods,
+          invocations
+        }, callback)
         return chainable
       }
     })
@@ -87,20 +92,12 @@ function collectize (methods, invocations, chainable) {
   function unpromisify () {
     Object.defineProperty(chainable, 'catch', {value: undefined})
     Object.defineProperty(chainable, 'then', {value: undefined})
+    Object.defineProperty(chainable, 'finally', {value: undefined})
   }
 
   function toPromise () {
     unpromisify(chainable)
-    return new Promise(function (resolve, reject) {
-      setValues({
-        chainable: chainable,
-        methods: methods,
-        queries: invocations
-      }, function (err, res) {
-        if (err) return reject(err)
-        return resolve(res)
-      })
-    })
+    return setValues({chainable, methods, invocations})
   }
 
   Object.defineProperty(chainable, 'then', {
@@ -121,52 +118,54 @@ function collectize (methods, invocations, chainable) {
 }
 
 function collect (chainable, methods, invocations, method) {
-  return function () {
-    const mapName = arguments[0]
+  return function collectInvokeable (...args) {
+    const mapName = args[0]
     if (methods[mapName]) throw new Error("You can't name the map name the same as your methods.")
-    invocations.push({method: method, args: arguments})
+    invocations.push({method, args})
     return chainable
   }
 }
 
-// params = {chainable, methods, queries}
-function setValues (params, callback) {
-  const chainable = params.chainable
-  const query = params.queries.shift()
-  if (query === undefined) return callback(null, chainable)
+// params = {chainable, methods, invocations}
+function setValuesCb (params, callback) {
+  util.invokeAsync(callback, setValues(params))
+}
 
-  const method = params.methods[query.method]
-  const args = Array.from(query.args || [])
-  const name = args.shift()
-  if (method.options.evaluate !== false) {
-    const arg1 = args.shift()
-    if (typeof name !== 'string') {
-      throw new Error(`colt().${method.method}(mapName, args...): The mapName must be  a string.`)
+async function setValues ({chainable, invocations, methods}) {
+  for (const query of invocations) {
+    const method = methods[query.method]
+    const args = Array.from(query.args || [])
+    const name = args.shift()
+    if (method.options.evaluate !== false) {
+      const arg1 = args.shift()
+      if (typeof name !== 'string') {
+        throw new Error(`colt().${method.method}(mapName, args...): The mapName must be  a string.`)
+      }
+
+      let value
+      try {
+        value = await util.promisifyInput({method: arg1, args: [], binding: chainable})
+      } catch (err) {
+        throw errorify(err)
+      }
+
+      try {
+        const data = await method.method.call(chainable, {name: name, value})
+        chainable[name] = data
+      } catch (err) {
+        throw errorify(err)
+      }
+    } else {
+      try {
+        const data = await method.method.call(chainable, {name, args})
+        chainable[name] = data
+      } catch (err) {
+        throw errorify(err)
+      }
     }
 
-    util.callbackify({method: arg1, args: args}, function (err, value) {
-      if (err) return callback(errorify(err))
-      util.callbackify({
-        method: method.method,
-        args: [{name: name, value: value}],
-        binding: chainable
-      }, function (err, data) {
-        if (err) return callback(errorify(err))
-        params.chainable[name] = data
-        setValues(params, callback)
-      })
-    })
-  } else {
-    util.callbackify({
-      method: method.method,
-      args: [{name: name, args: args}],
-      binding: chainable
-    }, function (err, data) {
-      if (err) return callback(errorify(err))
-      params.chainable[name] = data
-      setValues(params, callback)
-    })
   }
+  return chainable
 }
 
 function errorify (err) {
